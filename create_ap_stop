@@ -1,0 +1,26 @@
+#!/bin/bash
+
+WIFI_IFACE=$1
+INTERNET_IFACE=$2
+CONFDIR=$(/tmp/create_ap.${WIFI_IFACE}.conf.d)
+SHARE_METHOD=nat
+
+for x in $CONFDIR/*.pid; do
+    # even if the $CONFDIR is empty, the for loop will assign
+    # a value in $x. so we need to check if the value is a file
+    [[ -f $x ]] && kill -9 $(cat $x)
+done
+rm -rf $CONFDIR
+if [[ "$SHARE_METHOD" != "none" ]]; then
+    if [[ "$SHARE_METHOD" == "nat" ]]; then
+        iptables -t nat -D POSTROUTING -o ${INTERNET_IFACE} -j MASQUERADE
+        iptables -D FORWARD -i ${WIFI_IFACE} -j ACCEPT
+        echo $OLD_IP_FORWARD > /proc/sys/net/ipv4/ip_forward
+    elif [[ "$SHARE_METHOD" == "bridge" ]]; then
+        ip link set down $BRIDGE_IFACE
+        brctl delbr $BRIDGE_IFACE
+    fi
+fi
+ip link set down dev ${WIFI_IFACE}
+ip addr flush ${WIFI_IFACE}
+exit 0

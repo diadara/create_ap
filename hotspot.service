@@ -1,0 +1,11 @@
+[Unit]
+Description= Start Wifi Hotspot
+After=syslog.target network.target 
+
+[Service]
+Type=oneshot
+ExecStart=/home/diadara/create_ap/create_ap wlan0 eth0 pifi pifi123123
+ExecStop=/home/diadara/create_ap/create_ap_stop wlan0 eth0
+
+[Install]
+WantedBy=multi-user.target
